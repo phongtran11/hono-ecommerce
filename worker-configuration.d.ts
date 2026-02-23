@@ -3,4 +3,5 @@
 interface Env {
 	DATABASE_URL: string;
 	JWT_SECRET: string;
+	PASSWORD_PEPPER: string;
 }
