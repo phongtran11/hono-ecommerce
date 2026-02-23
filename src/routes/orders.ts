@@ -1,11 +1,18 @@
 import { Hono } from "hono";
-import { products, orders, generateOrderId } from "../data";
-import type { CartItem } from "../types";
+import { eq, sql } from "drizzle-orm";
+import { products, orders, orderItems } from "../db/schema";
+import { authMiddleware } from "../middleware/auth";
+import type { Env, CartItem } from "../types";
 
-const orderRoutes = new Hono();
+const orderRoutes = new Hono<Env>();
 
-// POST /api/orders — create an order
+// All order routes require authentication
+orderRoutes.use("/*", authMiddleware);
+
+// POST /api/orders — create an order (authenticated)
 orderRoutes.post("/", async (c) => {
+  const db = c.get("db");
+  const payload = c.get("jwtPayload");
   const body = await c.req.json<{ items: CartItem[] }>();
 
   if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
@@ -14,20 +21,33 @@ orderRoutes.post("/", async (c) => {
 
   // Validate items and compute total
   let total = 0;
+  const validatedItems: {
+    productId: string;
+    quantity: number;
+    price: number;
+  }[] = [];
+
   for (const item of body.items) {
-    const product = products.find((p) => p.id === item.productId);
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(eq(products.id, item.productId))
+      .limit(1);
+
     if (!product) {
       return c.json(
         { success: false, message: `Product ${item.productId} not found` },
         404,
       );
     }
+
     if (item.quantity <= 0) {
       return c.json(
         { success: false, message: "Quantity must be greater than 0" },
         400,
       );
     }
+
     if (product.stock < item.quantity) {
       return c.json(
         {
@@ -37,40 +57,83 @@ orderRoutes.post("/", async (c) => {
         400,
       );
     }
-    total += product.price * item.quantity;
+
+    const price = Number(product.price);
+    total += price * item.quantity;
+    validatedItems.push({
+      productId: item.productId,
+      quantity: item.quantity,
+      price,
+    });
   }
 
   // Deduct stock
-  for (const item of body.items) {
-    const product = products.find((p) => p.id === item.productId)!;
-    product.stock -= item.quantity;
+  for (const item of validatedItems) {
+    await db
+      .update(products)
+      .set({ stock: sql`${products.stock} - ${item.quantity}` })
+      .where(eq(products.id, item.productId));
   }
 
-  const order = {
-    id: generateOrderId(),
-    items: body.items,
-    total: Math.round(total * 100) / 100,
-    status: "pending" as const,
-    createdAt: new Date().toISOString(),
-  };
+  // Create order
+  const [order] = await db
+    .insert(orders)
+    .values({
+      userId: payload.sub,
+      total: String(Math.round(total * 100) / 100),
+      status: "pending",
+    })
+    .returning();
 
-  orders.push(order);
+  // Create order items
+  await db.insert(orderItems).values(
+    validatedItems.map((item) => ({
+      orderId: order.id,
+      productId: item.productId,
+      quantity: item.quantity,
+      price: String(item.price),
+    })),
+  );
 
   return c.json({ success: true, data: order }, 201);
 });
 
-// GET /api/orders — list all orders
-orderRoutes.get("/", (c) => {
-  return c.json({ success: true, data: orders, total: orders.length });
+// GET /api/orders — list orders for the authenticated user
+orderRoutes.get("/", async (c) => {
+  const db = c.get("db");
+  const payload = c.get("jwtPayload");
+
+  const userOrders = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.userId, payload.sub));
+
+  return c.json({ success: true, data: userOrders, total: userOrders.length });
 });
 
-// GET /api/orders/:id — get single order
-orderRoutes.get("/:id", (c) => {
-  const order = orders.find((o) => o.id === c.req.param("id"));
-  if (!order) {
+// GET /api/orders/:id — get single order for the authenticated user
+orderRoutes.get("/:id", async (c) => {
+  const db = c.get("db");
+  const payload = c.get("jwtPayload");
+  const id = c.req.param("id");
+
+  const [order] = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.id, id))
+    .limit(1);
+
+  if (!order || order.userId !== payload.sub) {
     return c.json({ success: false, message: "Order not found" }, 404);
   }
-  return c.json({ success: true, data: order });
+
+  // Get order items
+  const items = await db
+    .select()
+    .from(orderItems)
+    .where(eq(orderItems.orderId, id));
+
+  return c.json({ success: true, data: { ...order, items } });
 });
 
 export { orderRoutes };
