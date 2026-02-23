@@ -5,14 +5,21 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "npx tsx seed.ts"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "drizzle-orm": "^0.45.1",
     "hono": "^4.7.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250214.0",
-    "wrangler": "^3.105.0",
-    "typescript": "^5.7.0"
+    "drizzle-kit": "^0.31.9",
+    "typescript": "^5.7.0",
+    "wrangler": "^3.105.0"
   }
 }
