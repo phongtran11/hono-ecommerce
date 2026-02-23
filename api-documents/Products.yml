@@ -5,7 +5,7 @@ info:
 
 http:
   method: get
-  url: http://localhost:8787/api/products
+  url: "{{base_url}}/api/products"
   auth: inherit
 
 settings:

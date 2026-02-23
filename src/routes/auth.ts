@@ -36,7 +36,7 @@ authRoutes.post("/register", async (c) => {
   }
 
   // Hash password
-  const { hash, salt } = await hashPassword(password, c.env.PASSWORD_PEPPER);
+  const { hash, salt } = await hashPassword(password);
 
   // Insert user
   const [newUser] = await db
@@ -99,7 +99,6 @@ authRoutes.post("/login", async (c) => {
     password,
     user.passwordHash,
     user.passwordSalt,
-    c.env.PASSWORD_PEPPER,
   );
 
   if (!isValid) {

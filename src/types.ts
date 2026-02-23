@@ -5,7 +5,6 @@ export type Env = {
   Bindings: {
     DATABASE_URL: string;
     JWT_SECRET: string;
-    PASSWORD_PEPPER: string;
   };
   Variables: {
     db: Database;
