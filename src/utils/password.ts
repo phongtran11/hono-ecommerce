@@ -36,14 +36,15 @@ async function deriveKey(
 }
 
 /**
- * Hash a password with a random salt using PBKDF2.
+ * Hash a password with a random salt and server-side pepper using PBKDF2.
  * Returns base64-encoded hash and salt for storage.
  */
 export async function hashPassword(
   password: string,
+  pepper: string,
 ): Promise<{ hash: string; salt: string }> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  const hashBuffer = await deriveKey(password, salt);
+  const hashBuffer = await deriveKey(password + pepper, salt);
 
   return {
     hash: toBase64(hashBuffer),
@@ -52,15 +53,16 @@ export async function hashPassword(
 }
 
 /**
- * Verify a password against a stored hash and salt.
+ * Verify a password against a stored hash, salt, and server-side pepper.
  */
 export async function verifyPassword(
   password: string,
   storedHash: string,
   storedSalt: string,
+  pepper: string,
 ): Promise<boolean> {
   const salt = fromBase64(storedSalt);
-  const hashBuffer = await deriveKey(password, salt);
+  const hashBuffer = await deriveKey(password + pepper, salt);
   const computedHash = toBase64(hashBuffer);
 
   // Constant-time comparison to prevent timing attacks
