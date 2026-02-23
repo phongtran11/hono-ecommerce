@@ -20,3 +20,7 @@ export interface Order {
   status: "pending" | "processing" | "shipped" | "delivered";
   createdAt: string;
 }
+
+export interface Bindings {
+  AI: any;
+}
