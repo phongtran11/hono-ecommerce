@@ -3,8 +3,7 @@ import { authMiddleware } from "../middleware/auth";
 import type { Env } from "../types";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
-import { CartRepository } from "../repositories/cart.repository";
-import { CartService } from "../services/cart.service";
+import * as cartService from "../services/cart.service";
 
 const addItemSchema = z.object({
   productId: z.string().min(1, "Product ID is required"),
@@ -26,10 +25,7 @@ const cartRoutes = new Hono<Env>()
     const db = c.get("db");
     const payload = c.get("jwtPayload");
 
-    const cartRepo = new CartRepository(db);
-    const cartService = new CartService(cartRepo);
-
-    const result = await cartService.getUserCart(payload.sub);
+    const result = await cartService.getUserCart(db, payload.sub);
 
     return c.json({
       success: true,
@@ -43,10 +39,8 @@ const cartRoutes = new Hono<Env>()
     const payload = c.get("jwtPayload");
     const body = c.req.valid("json");
 
-    const cartRepo = new CartRepository(db);
-    const cartService = new CartService(cartRepo);
-
     const result = await cartService.addItemToCart(
+      db,
       payload.sub,
       body.productId,
       body.vendorId,
@@ -70,10 +64,8 @@ const cartRoutes = new Hono<Env>()
     const itemId = c.req.param("itemId");
     const body = c.req.valid("json");
 
-    const cartRepo = new CartRepository(db);
-    const cartService = new CartService(cartRepo);
-
     const result = await cartService.updateItemQuantity(
+      db,
       payload.sub,
       itemId,
       body.quantity,
@@ -95,10 +87,7 @@ const cartRoutes = new Hono<Env>()
     const payload = c.get("jwtPayload");
     const itemId = c.req.param("itemId");
 
-    const cartRepo = new CartRepository(db);
-    const cartService = new CartService(cartRepo);
-
-    const result = await cartService.removeItem(payload.sub, itemId);
+    const result = await cartService.removeItem(db, payload.sub, itemId);
 
     if (!result.success) {
       return c.json(
@@ -118,10 +107,7 @@ const cartRoutes = new Hono<Env>()
     const db = c.get("db");
     const payload = c.get("jwtPayload");
 
-    const cartRepo = new CartRepository(db);
-    const cartService = new CartService(cartRepo);
-
-    const result = await cartService.clearCart(payload.sub);
+    const result = await cartService.clearCart(db, payload.sub);
 
     return c.json(
       { success: result.success, message: result.message },

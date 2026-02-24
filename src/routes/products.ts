@@ -1,9 +1,8 @@
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
-import { products, productVendors, vendors } from "../db/schema";
 import type { Env } from "../types";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
+import * as productsService from "../services/products.service";
 
 const getProductsSchema = z.object({
   category: z.string().optional(),
@@ -16,32 +15,9 @@ const productRoutes = new Hono<Env>()
     const db = c.get("db");
     const { category } = c.req.valid("query");
 
-    let result = await db.select().from(products);
+    const result = await productsService.getProducts(db, category);
 
-    if (category) {
-      result = result.filter(
-        (p) => p.category.toLowerCase() === category.toLowerCase(),
-      );
-    }
-
-    // Enrich each product with its vendors & stock
-    const enriched = await Promise.all(
-      result.map(async (product) => {
-        const pvRows = await db
-          .select({
-            vendorId: vendors.id,
-            vendorName: vendors.name,
-            stock: productVendors.stock,
-          })
-          .from(productVendors)
-          .innerJoin(vendors, eq(productVendors.vendorId, vendors.id))
-          .where(eq(productVendors.productId, product.id));
-
-        return { ...product, vendors: pvRows };
-      }),
-    );
-
-    return c.json({ success: true, data: enriched, total: enriched.length });
+    return c.json(result);
   })
 
   // GET /api/products/:id — get single product with vendors
@@ -49,27 +25,13 @@ const productRoutes = new Hono<Env>()
     const db = c.get("db");
     const id = c.req.param("id");
 
-    const [product] = await db
-      .select()
-      .from(products)
-      .where(eq(products.id, id))
-      .limit(1);
+    const result = await productsService.getProductById(db, id);
 
-    if (!product) {
-      return c.json({ success: false, message: "Product not found" }, 404);
+    if (!result.success) {
+      return c.json({ success: false, message: result.message }, result.status as any);
     }
 
-    const pvRows = await db
-      .select({
-        vendorId: vendors.id,
-        vendorName: vendors.name,
-        stock: productVendors.stock,
-      })
-      .from(productVendors)
-      .innerJoin(vendors, eq(productVendors.vendorId, vendors.id))
-      .where(eq(productVendors.productId, product.id));
-
-    return c.json({ success: true, data: { ...product, vendors: pvRows } });
+    return c.json({ success: true, data: result.data });
   });
 
 export { productRoutes };

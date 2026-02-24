@@ -1,14 +1,11 @@
 import { Context, Hono } from "hono";
-import { sign } from "hono/jwt";
 import { setCookie, deleteCookie, getCookie } from "hono/cookie";
-import { eq } from "drizzle-orm";
-import { users, refreshTokens } from "../db/schema";
-import { hashPassword, verifyPassword } from "../utils/password";
 import type { Env } from "../types";
 import { BlankInput } from "hono/types";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { AT_EXPIRES_IN_SEC, RT_EXPIRES_IN_SEC } from "../constants/auth";
+import * as authService from "../services/auth.service";
 
 const registerSchema = z.object({
   email: z.email("Invalid email address"),
@@ -21,34 +18,12 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-// Helper to generate cookies based on token lifetimes
-async function createAuthCookies(
-  c: Context<Env, "/register", BlankInput>,
-  user: { id: string; email: string },
+// Helper to apply cookies manually based on auth tokens
+async function setAuthCookies(
+  c: Context<Env, "/register" | "/login", BlankInput>,
+  accessToken: string,
+  refreshToken: string,
 ) {
-  const db = c.get("db");
-  const secret = c.env.JWT_SECRET;
-
-  // 1. Create short-lived Access Token
-  const accessToken = await sign(
-    {
-      sub: user.id,
-      email: user.email,
-      exp: Math.floor(Date.now() / 1000) + AT_EXPIRES_IN_SEC,
-    },
-    secret,
-  );
-
-  // 2. Create long-lived Refresh Token
-  const rtString = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + RT_EXPIRES_IN_SEC * 1000);
-
-  // Store RT in database
-  await db.insert(refreshTokens).values({
-    token: rtString,
-    userId: user.id,
-    expiresAt,
-  });
 
   // 3. Set Cookies
   const isProd = false; // Set this based on env usually
@@ -66,7 +41,7 @@ async function createAuthCookies(
     maxAge: AT_EXPIRES_IN_SEC,
   });
 
-  setCookie(c, "refresh_token", rtString, {
+  setCookie(c, "refresh_token", refreshToken, {
     ...cookieOptions,
     maxAge: RT_EXPIRES_IN_SEC,
   });
@@ -90,37 +65,16 @@ const authRoutes = new Hono<Env>()
 
     const db = c.get("db");
 
-    // Check if user already exists
-    const existing = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
+    const result = await authService.registerUser(db, email, password, name);
 
-    if (existing.length > 0) {
-      return c.json(
-        { success: false, message: "Email already registered" },
-        409,
-      );
+    if (!result.success || !result.user) {
+      return c.json({ success: false, message: result.message }, result.status as any);
     }
 
-    // Hash password
-    const { hash, salt } = await hashPassword(password);
+    const tokens = await authService.createAuthCookies(db, c.env.JWT_SECRET, result.user);
+    await setAuthCookies(c, tokens.accessToken, tokens.rtString);
 
-    // Insert user
-    const [newUser] = await db
-      .insert(users)
-      .values({
-        email,
-        passwordHash: hash,
-        passwordSalt: salt,
-        name,
-      })
-      .returning({ id: users.id, email: users.email, name: users.name });
-
-    await createAuthCookies(c, newUser);
-
-    return c.json({ success: true, data: { user: newUser } }, 201);
+    return c.json({ success: true, data: { user: result.user } }, 201);
   })
 
   // ── POST /api/auth/login ────────────────────────────────────
@@ -129,39 +83,22 @@ const authRoutes = new Hono<Env>()
 
     const db = c.get("db");
 
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
+    const result = await authService.loginUser(db, email, password);
 
-    if (!user) {
-      return c.json({ success: false, message: "Invalid credentials" }, 401);
+    if (!result.success || !result.user) {
+      return c.json({ success: false, message: result.message }, result.status as any);
     }
 
-    const isValid = await verifyPassword(
-      password,
-      user.passwordHash,
-      user.passwordSalt,
-    );
+    const tokens = await authService.createAuthCookies(db, c.env.JWT_SECRET, result.user);
+    await setAuthCookies(c, tokens.accessToken, tokens.rtString);
 
-    if (!isValid) {
-      return c.json({ success: false, message: "Invalid credentials" }, 401);
-    }
-
-    const userData = { id: user.id, email: user.email, name: user.name };
-    await createAuthCookies(c, userData);
-
-    return c.json({ success: true, data: { user: userData } });
+    return c.json({ success: true, data: { user: result.user } });
   })
 
   // ── POST /api/auth/logout ───────────────────────────────────
   .post("/logout", async (c) => {
     const db = c.get("db");
-    const rtCookie = getCookie(c, "refresh_token"); // If a refresh token cookie exists, invalidate it in the DB
-    if (rtCookie) {
-      await db.delete(refreshTokens).where(eq(refreshTokens.token, rtCookie));
-    }
+    await authService.logoutUser(db, getCookie(c, "refresh_token"));
 
     // Clear cookies
     deleteCookie(c, "access_token", { path: "/" });
