@@ -1,10 +1,12 @@
 import { Hono } from "hono";
+import { hc } from "hono/client";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 import { createDb } from "./db";
 import { productRoutes } from "./routes/products";
 import { orderRoutes } from "./routes/orders";
+import { cartRoutes } from "./routes/cart";
 import { authRoutes } from "./routes/auth";
 import type { Env } from "./types";
 
@@ -12,7 +14,13 @@ const app = new Hono<Env>();
 
 // ── Middleware ───────────────────────────────────────────────
 app.use("*", logger());
-app.use("*", cors());
+app.use(
+  "*",
+  cors({
+    origin: "http://localhost:3000", // URL frontend của bạn
+    credentials: true,
+  }),
+);
 app.use("*", prettyJSON());
 
 // ── Database middleware (inject db into context) ────────────
@@ -30,15 +38,24 @@ app.get("/", (c) => {
     endpoints: {
       auth: "/api/auth/register | /api/auth/login",
       products: "/api/products",
+      cart: "/api/cart (requires auth)",
       orders: "/api/orders (requires auth)",
     },
   });
 });
 
 // ── Routes ──────────────────────────────────────────────────
-app.route("/api/auth", authRoutes);
-app.route("/api/products", productRoutes);
-app.route("/api/orders", orderRoutes);
+const routes = app
+  .route("/api/auth", authRoutes)
+  .route("/api/products", productRoutes)
+  .route("/api/orders", orderRoutes)
+  .route("/api/cart", cartRoutes);
+
+export type AppType = typeof routes;
+
+const client = hc<AppType>("http://localhost:3000");
+
+client;
 
 // ── 404 fallback ────────────────────────────────────────────
 app.notFound((c) => {

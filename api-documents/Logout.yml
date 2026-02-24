@@ -1,0 +1,15 @@
+info:
+  name: Logout
+  type: http
+  seq: 13
+
+http:
+  method: post
+  url: "{{base_url}}/api/auth/logout"
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

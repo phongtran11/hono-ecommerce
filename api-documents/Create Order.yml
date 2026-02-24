@@ -1,0 +1,30 @@
+info:
+  name: Create Order
+  type: http
+  seq: 10
+
+http:
+  method: post
+  url: "{{base_url}}/api/orders"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "items": [
+          {
+            "productId": "product-uuid",
+            "vendorId": "vendor-uuid",
+            "quantity": 1
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

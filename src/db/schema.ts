@@ -17,6 +17,24 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// ── Refresh Tokens ──────────────────────────────────────────
+export const refreshTokens = pgTable("refresh_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  token: text("token").notNull().unique(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ── Vendors ─────────────────────────────────────────────────
+export const vendors = pgTable("vendors", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // ── Products ────────────────────────────────────────────────
 export const products = pgTable("products", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -25,6 +43,17 @@ export const products = pgTable("products", {
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   image: text("image").notNull(),
   category: text("category").notNull(),
+});
+
+// ── Product Vendors (stock per vendor) ──────────────────────
+export const productVendors = pgTable("product_vendors", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id),
+  vendorId: uuid("vendor_id")
+    .notNull()
+    .references(() => vendors.id),
   stock: integer("stock").notNull().default(0),
 });
 
@@ -48,6 +77,34 @@ export const orderItems = pgTable("order_items", {
   productId: uuid("product_id")
     .notNull()
     .references(() => products.id),
+  vendorId: uuid("vendor_id")
+    .notNull()
+    .references(() => vendors.id),
   quantity: integer("quantity").notNull(),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+});
+
+// ── Carts ───────────────────────────────────────────────────
+export const carts = pgTable("carts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ── Cart Items ──────────────────────────────────────────────
+export const cartItems = pgTable("cart_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  cartId: uuid("cart_id")
+    .notNull()
+    .references(() => carts.id, { onDelete: "cascade" }),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id),
+  vendorId: uuid("vendor_id")
+    .notNull()
+    .references(() => vendors.id),
+  quantity: integer("quantity").notNull().default(1),
 });

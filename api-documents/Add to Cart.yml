@@ -1,0 +1,26 @@
+info:
+  name: Add to Cart
+  type: http
+  seq: 6
+
+http:
+  method: post
+  url: "{{base_url}}/api/cart"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "productId": "product-uuid",
+        "vendorId": "vendor-uuid",
+        "quantity": 1
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

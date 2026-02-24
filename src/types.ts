@@ -15,5 +15,6 @@ export type Env = {
 // ── Cart ────────────────────────────────────────────────────
 export interface CartItem {
   productId: string;
+  vendorId: string;
   quantity: number;
 }

@@ -8,6 +8,27 @@
       "when": 1771827371484,
       "tag": "0000_lyrical_sebastian_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771896790440,
+      "tag": "0001_stale_tag",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771897497358,
+      "tag": "0002_mysterious_nova",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771906938250,
+      "tag": "0003_lazy_storm",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,15 @@
+info:
+  name: Clear Cart
+  type: http
+  seq: 9
+
+http:
+  method: delete
+  url: "{{base_url}}/api/cart"
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
