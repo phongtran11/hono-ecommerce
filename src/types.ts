@@ -1,4 +1,5 @@
-import type { Database } from "./db";
+import { ContentfulStatusCode } from "hono/utils/http-status";
+import { DB } from "@/db";
 
 // ── Cloudflare env bindings ─────────────────────────────────
 export type Env = {
@@ -7,14 +8,15 @@ export type Env = {
     JWT_SECRET: string;
   };
   Variables: {
-    db: Database;
+    db: DB;
     jwtPayload: { sub: string; email: string };
   };
 };
 
-// ── Cart ────────────────────────────────────────────────────
-export interface CartItem {
-  productId: string;
-  vendorId: string;
-  quantity: number;
-}
+// ── Response ────────────────────────────────────────────────
+export type Response<T> = {
+  success: boolean;
+  status: ContentfulStatusCode;
+  message?: string;
+  data?: T;
+};

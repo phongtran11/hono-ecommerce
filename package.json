@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250214.0",
+    "@types/k6": "^1.6.0",
     "@types/node": "^25.3.0",
     "drizzle-kit": "^0.31.9",
     "typescript": "^5.7.0",

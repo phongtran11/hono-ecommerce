@@ -1,14 +1,11 @@
 import { Hono } from "hono";
-import { hc } from "hono/client";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
-import { createDb } from "./db";
-import { productRoutes } from "./routes/products";
-import { orderRoutes } from "./routes/orders";
-import { cartRoutes } from "./routes/cart";
-import { authRoutes } from "./routes/auth";
-import type { Env } from "./types";
+import { createDb } from "@/db";
+import { authRoutes } from "@/modules/auth/auth.route";
+import { productRoutes } from "@/modules/products/products.route";
+import type { Env } from "@/types";
 
 const app = new Hono<Env>();
 
@@ -17,7 +14,7 @@ app.use("*", logger());
 app.use(
   "*",
   cors({
-    origin: "http://localhost:3000", // URL frontend của bạn
+    origin: "http://localhost:3000",
     credentials: true,
   }),
 );
@@ -38,8 +35,6 @@ app.get("/", (c) => {
     endpoints: {
       auth: "/api/auth/register | /api/auth/login",
       products: "/api/products",
-      cart: "/api/cart (requires auth)",
-      orders: "/api/orders (requires auth)",
     },
   });
 });
@@ -47,15 +42,9 @@ app.get("/", (c) => {
 // ── Routes ──────────────────────────────────────────────────
 const routes = app
   .route("/api/auth", authRoutes)
-  .route("/api/products", productRoutes)
-  .route("/api/orders", orderRoutes)
-  .route("/api/cart", cartRoutes);
+  .route("/api/products", productRoutes);
 
 export type AppType = typeof routes;
-
-const client = hc<AppType>("http://localhost:3000");
-
-client;
 
 // ── 404 fallback ────────────────────────────────────────────
 app.notFound((c) => {
@@ -64,8 +53,8 @@ app.notFound((c) => {
 
 // ── Error handler ───────────────────────────────────────────
 app.onError((err, c) => {
-  console.error(`[Error] ${err.message}`);
-  return c.json({ success: false, message: "Internal Server Error" }, 500);
+  console.error(err);
+  return c.json({ success: false, message: err.message }, 500);
 });
 
 export default app;

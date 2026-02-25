@@ -1,10 +1,10 @@
 import { createMiddleware } from "hono/factory";
-import { jwt, sign, verify } from "hono/jwt";
+import { sign, verify } from "hono/jwt";
 import { getCookie, setCookie } from "hono/cookie";
 import { eq } from "drizzle-orm";
-import { refreshTokens, users } from "../db/schema";
-import type { Env } from "../types";
-import { AT_EXPIRES_IN_SEC } from "../constants/auth";
+import { refreshTokens } from "@/db/schema";
+import type { Env } from "@/types";
+import { AT_EXPIRES_IN_SEC } from "@/modules/auth/auth.constant";
 
 /**
  * Double Cookie Auth Middleware
@@ -40,24 +40,20 @@ export const authMiddleware = createMiddleware<Env>(async (c, next) => {
   }
 
   // Validate Refresh Token in Database
-  const [rtRecord] = await db
-    .select()
-    .from(refreshTokens)
-    .innerJoin(users, eq(refreshTokens.userId, users.id))
-    .where(eq(refreshTokens.token, refreshTokenCookie))
-    .limit(1);
+  const rtRecord = await db.query.refreshTokens.findFirst({
+    where: eq(refreshTokens.token, refreshTokenCookie),
+    with: {
+      user: true,
+    },
+  });
 
   if (!rtRecord) {
     // Token not found or revoked
     return c.json({ success: false, message: "Unauthorized" }, 401);
   }
 
-  if (new Date() > rtRecord.refresh_tokens.expiresAt) {
-    // Token expired
-    // Optional: Delete the expired token from DB
-    await db
-      .delete(refreshTokens)
-      .where(eq(refreshTokens.id, rtRecord.refresh_tokens.id));
+  if (new Date() > rtRecord.expiresAt) {
+    await db.delete(refreshTokens).where(eq(refreshTokens.id, rtRecord.id));
     return c.json(
       { success: false, message: "Unauthorized (Session Expired)" },
       401,
@@ -67,15 +63,16 @@ export const authMiddleware = createMiddleware<Env>(async (c, next) => {
   // 3. Refresh is valid! Mint a new Access Token
   const newAccessToken = await sign(
     {
-      sub: rtRecord.users.id,
-      email: rtRecord.users.email,
+      sub: rtRecord.user.id,
+      email: rtRecord.user.email,
       exp: Math.floor(Date.now() / 1000) + AT_EXPIRES_IN_SEC,
     },
     secret,
   );
 
   // Set the new Access Token Cookie
-  const isProd = false; // Usually based on env
+  const isProd = false;
+
   setCookie(c, "access_token", newAccessToken, {
     httpOnly: true,
     secure: isProd,
@@ -85,6 +82,6 @@ export const authMiddleware = createMiddleware<Env>(async (c, next) => {
   });
 
   // Set payload and proceed
-  c.set("jwtPayload", { sub: rtRecord.users.id, email: rtRecord.users.email });
+  c.set("jwtPayload", { sub: rtRecord.user.id, email: rtRecord.user.email });
   await next();
 });

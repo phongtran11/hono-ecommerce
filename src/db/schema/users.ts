@@ -1,4 +1,8 @@
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { carts } from "./carts";
+import { relations } from "drizzle-orm";
+import { orders } from "./orders";
+import { auditColumns } from "./common";
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -6,8 +10,16 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   passwordSalt: text("password_salt").notNull(),
   name: text("name").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  ...auditColumns,
 });
+
+export type User = typeof users.$inferSelect;
+
+export const userRelations = relations(users, ({ many }) => ({
+  refreshTokens: many(refreshTokens),
+  carts: many(carts),
+  orders: many(orders),
+}));
 
 export const refreshTokens = pgTable("refresh_tokens", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -16,5 +28,14 @@ export const refreshTokens = pgTable("refresh_tokens", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  ...auditColumns,
 });
+
+export const refreshTokenRelations = relations(refreshTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [refreshTokens.userId],
+    references: [users.id],
+  }),
+}));
+
+export type RefreshToken = typeof refreshTokens.$inferSelect;

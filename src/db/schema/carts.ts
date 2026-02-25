@@ -1,6 +1,8 @@
 import { pgTable, integer, timestamp, uuid } from "drizzle-orm/pg-core";
 import { users } from "./users";
-import { products, vendors } from "./products";
+import { relations } from "drizzle-orm";
+import { auditColumns } from "./common";
+import { productVariants } from "./product-variants";
 
 export const carts = pgTable("carts", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -8,19 +10,40 @@ export const carts = pgTable("carts", {
     .notNull()
     .unique()
     .references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  ...auditColumns,
 });
+
+export type Cart = typeof carts.$inferSelect;
+
+export const cartRelations = relations(carts, ({ one, many }) => ({
+  user: one(users, {
+    fields: [carts.userId],
+    references: [users.id],
+  }),
+  items: many(cartItems),
+}));
 
 export const cartItems = pgTable("cart_items", {
   id: uuid("id").defaultRandom().primaryKey(),
   cartId: uuid("cart_id")
     .notNull()
     .references(() => carts.id, { onDelete: "cascade" }),
-  productId: uuid("product_id")
+  variantId: uuid("variant_id")
     .notNull()
-    .references(() => products.id),
-  vendorId: uuid("vendor_id")
-    .notNull()
-    .references(() => vendors.id),
+    .references(() => productVariants.id),
   quantity: integer("quantity").notNull().default(1),
+  ...auditColumns,
 });
+
+export type CartItem = typeof cartItems.$inferSelect;
+
+export const cartItemRelations = relations(cartItems, ({ one }) => ({
+  cart: one(carts, {
+    fields: [cartItems.cartId],
+    references: [carts.id],
+  }),
+  variant: one(productVariants, {
+    fields: [cartItems.variantId],
+    references: [productVariants.id],
+  }),
+}));
