@@ -3,15 +3,18 @@ main = "src/index.ts"
 compatibility_date = "2025-02-20"
 compatibility_flags = ["nodejs_compat"]
 
-[vars]
-ENVIRONMENT = "production"
-CORS_ORIGIN = "https://your-frontend-domain.com"
-
 [observability]
 [observability.logs]
 enabled = true
 invocation_logs = true
 
-
 [observability.traces]
 enabled = true
+
+[env.production.vars]
+ENVIRONMENT = "production"
+CORS_ORIGIN = "https://your-frontend-domain.com"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+CORS_ORIGIN = "https://staging.your-frontend-domain.com"

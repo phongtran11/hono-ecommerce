@@ -48,13 +48,10 @@ describe("productsService", () => {
         undefined,
       );
 
-      await expect(
-        productsService.createProduct(mockDb, validInput),
-      ).rejects.toThrow(NotFoundError);
+      const promise = productsService.createProduct(mockDb, validInput);
 
-      await expect(
-        productsService.createProduct(mockDb, validInput),
-      ).rejects.toThrow("Vendor not found");
+      await expect(promise).rejects.toThrow(NotFoundError);
+      await expect(promise).rejects.toThrow("Vendor not found");
     });
 
     it("should throw NotFoundError when category does not exist", async () => {

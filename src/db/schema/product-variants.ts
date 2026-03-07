@@ -40,14 +40,18 @@ export const productVariantRelations = relations(
 );
 
 // --- Product Variant Images ---
-export const productVariantImages = pgTable("product_variant_images", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  imagePath: text("image_url").notNull(),
-  variantId: uuid("variant_id")
-    .notNull()
-    .references(() => productVariants.id),
-  ...auditColumns,
-});
+export const productVariantImages = pgTable(
+  "product_variant_images",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    imageUrl: text("image_url").notNull(),
+    variantId: uuid("variant_id")
+      .notNull()
+      .references(() => productVariants.id),
+    ...auditColumns,
+  },
+  (t) => [index("product_variant_images_variant_id_idx").on(t.variantId)],
+);
 
 export type ProductVariantImage = typeof productVariantImages.$inferSelect;
 

@@ -26,7 +26,7 @@ export type PreparedProductData = {
   };
   variants: { name: string; stock: number }[];
   pricesByVariant: { name: string; price: string }[][];
-  imagesByVariant: { imagePath: string }[][];
+  imagesByVariant: { imageUrl: string }[][];
 };
 
 export type VariantWithDetails = ProductVariant & {

@@ -12,7 +12,6 @@ reviews:
     - "!**/*.json"
     - "!**/*.md"
     - "!**/*.sql"
-    - "!**/package-lock.json"
     - "!**/*.d.ts"
     - "!drizzle/**"
 chat:

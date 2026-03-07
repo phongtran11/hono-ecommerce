@@ -182,9 +182,18 @@ describe("authMiddleware", () => {
       email: mockUser.email,
     });
 
-    expect(sign).toHaveBeenCalled();
+    expect(sign).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sub: mockUser.id,
+        email: mockUser.email,
+      }),
+      "test-jwt-secret",
+    );
 
     const setCookieHeader = res.headers.get("set-cookie");
     expect(setCookieHeader).toContain("access_token=new-access-token");
+    expect(setCookieHeader).toContain("HttpOnly");
+    expect(setCookieHeader).toContain("Path=/");
+    expect(setCookieHeader).toContain("SameSite=Lax");
   });
 });

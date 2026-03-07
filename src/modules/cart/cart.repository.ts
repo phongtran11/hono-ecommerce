@@ -3,19 +3,19 @@ import { eq, and } from "drizzle-orm";
 import { carts, cartItems, productVariants } from "@/db/schema";
 
 export async function findOrCreateCart(db: DB, userId: string) {
-  let cart = await db.query.carts.findFirst({
+  const result = await db
+    .insert(carts)
+    .values({ userId })
+    .onConflictDoNothing({ target: carts.userId })
+    .returning();
+
+  if (result.length > 0) return result[0];
+
+  const existing = await db.query.carts.findFirst({
     where: eq(carts.userId, userId),
   });
 
-  if (!cart) {
-    const [newCart] = await db
-      .insert(carts)
-      .values({ userId })
-      .returning();
-    cart = newCart;
-  }
-
-  return cart;
+  return existing!;
 }
 
 export async function getCartWithItems(db: DB, userId: string) {

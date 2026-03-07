@@ -1,6 +1,6 @@
-import { index, pgTable, integer, uuid } from "drizzle-orm/pg-core";
+import { index, pgTable, integer, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { users } from "./users";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { auditColumns } from "./common";
 import { productVariants } from "./product-variants";
 
@@ -36,7 +36,12 @@ export const cartItems = pgTable(
     quantity: integer("quantity").notNull().default(1),
     ...auditColumns,
   },
-  (t) => [index("cart_items_cart_id_idx").on(t.cartId)],
+  (t) => [
+    index("cart_items_cart_id_idx").on(t.cartId),
+    uniqueIndex("cart_items_cart_variant_active_idx")
+      .on(t.cartId, t.variantId)
+      .where(sql`deleted_at IS NULL`),
+  ],
 );
 
 export type CartItem = typeof cartItems.$inferSelect;

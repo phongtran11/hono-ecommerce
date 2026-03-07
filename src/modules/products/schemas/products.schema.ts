@@ -7,7 +7,7 @@ const priceItemSchema = z.object({
 });
 
 const imageItemSchema = z.object({
-  imagePath: z.string().min(1, "Image path is required"),
+  imageUrl: z.string().min(1, "Image URL is required"),
 });
 
 const variantItemSchema = z.object({

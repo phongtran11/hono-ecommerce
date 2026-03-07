@@ -27,6 +27,8 @@ export async function addToCart(
     throw new NotFoundError("Product variant not found");
   }
 
+  // Preliminary stock check; authoritative enforcement occurs in the checkout
+  // transaction (orders.repository.ts) which atomically decrements stock.
   if (variant.stock < input.quantity) {
     throw new ValidationError(
       `Insufficient stock. Available: ${variant.stock}`,

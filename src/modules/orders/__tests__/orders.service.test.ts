@@ -102,8 +102,6 @@ describe("ordersService", () => {
         mockDb,
         userId,
         "cart-1",
-        [{ variantId: "variant-1", quantity: 2, price: "19.99" }],
-        "39.98",
       );
     });
   });

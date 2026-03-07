@@ -34,7 +34,7 @@ const authRoutes = new Hono<Env>()
       result.data.tokens.refreshToken,
     );
 
-    return c.json({ success: true, data: result.data }, 201);
+    return c.json({ success: true, data: { user: result.data.user } }, 201);
   })
 
   // ── POST /api/auth/login ────────────────────────────────────
@@ -54,7 +54,7 @@ const authRoutes = new Hono<Env>()
       result.data.tokens.refreshToken,
     );
 
-    return c.json({ success: true, data: result.data });
+    return c.json({ success: true, data: { user: result.data.user } });
   })
 
   // ── POST /api/auth/logout ───────────────────────────────────

@@ -14,33 +14,10 @@ export async function createOrder(db: DB, userId: string) {
     throw new ValidationError("Cart is empty");
   }
 
-  const items = cart.items.map((item) => {
-    if (!item.variant.prices.length) {
-      throw new ValidationError(
-        `No price found for variant: ${item.variant.name}`,
-      );
-    }
-    const lowestPrice = item.variant.prices.reduce(
-      (min, p) => (Number(p.price) < Number(min.price) ? p : min),
-      item.variant.prices[0],
-    );
-    return {
-      variantId: item.variantId,
-      quantity: item.quantity,
-      price: lowestPrice.price,
-    };
-  });
-
-  const total = items
-    .reduce((sum, item) => sum + Number(item.price) * item.quantity, 0)
-    .toFixed(2);
-
   const order = await ordersRepository.createOrderInTransaction(
     db,
     userId,
     cart.id,
-    items,
-    total,
   );
 
   return { success: true as const, status: 201 as const, data: order };

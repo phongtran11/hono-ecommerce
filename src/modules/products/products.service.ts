@@ -29,7 +29,7 @@ function prepareProductData(input: CreateProductInput): PreparedProductData {
     ),
     imagesByVariant: input.variants.map((v) =>
       (v.images ?? []).map((img) => ({
-        imagePath: img.imagePath,
+        imageUrl: img.imageUrl,
       })),
     ),
   };

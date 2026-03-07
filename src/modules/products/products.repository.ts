@@ -40,9 +40,14 @@ export async function findProducts(
     where: and(...conditions),
     with: {
       variants: {
+        where: notDeleted(productVariants.deletedAt),
         with: {
-          prices: true,
-          images: true,
+          prices: {
+            where: notDeleted(prices.deletedAt),
+          },
+          images: {
+            where: notDeleted(productVariantImages.deletedAt),
+          },
         },
       },
       vendor: true,
@@ -75,9 +80,14 @@ export async function findProductById(db: DB, id: string) {
     where: and(eq(products.id, id), notDeleted(products.deletedAt)),
     with: {
       variants: {
+        where: notDeleted(productVariants.deletedAt),
         with: {
-          prices: true,
-          images: true,
+          prices: {
+            where: notDeleted(prices.deletedAt),
+          },
+          images: {
+            where: notDeleted(productVariantImages.deletedAt),
+          },
         },
       },
       vendor: true,

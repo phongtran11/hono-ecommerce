@@ -42,7 +42,7 @@ const cartRoutes = new Hono<Env>()
         itemId,
         input,
       );
-      return c.json(result, 200);
+      return c.json(result, result.status);
     },
   )
 
@@ -54,7 +54,7 @@ const cartRoutes = new Hono<Env>()
       const { sub: userId } = c.get("jwtPayload");
       const { itemId } = c.req.valid("param");
       const result = await cartService.removeCartItem(db, userId, itemId);
-      return c.json(result, 200);
+      return c.json(result, result.status);
     },
   )
 

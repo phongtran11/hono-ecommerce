@@ -21,6 +21,9 @@ export function createPaginatedResponse<T>(
   page: number,
   limit: number,
 ): PaginatedResponse<T> {
+  if (limit <= 0) {
+    throw new Error(`limit must be > 0, got ${limit}`);
+  }
   return {
     data,
     total,
