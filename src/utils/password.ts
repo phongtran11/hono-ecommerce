@@ -26,7 +26,6 @@ async function deriveKey(
   return crypto.subtle.deriveBits(
     {
       name: "PBKDF2",
-      // @ts-ignore - CF Worker WebCrypto typings conflict with standard TS DOM typings for BufferSource
       salt,
       iterations: ITERATIONS,
       hash: HASH_ALGORITHM,

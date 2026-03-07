@@ -49,3 +49,10 @@ export async function saveRefreshToken(
 export async function deleteRefreshToken(db: DB, token: string): Promise<void> {
   await db.delete(refreshTokens).where(eq(refreshTokens.token, token));
 }
+
+export async function deleteRefreshTokensByUserId(
+  db: DB,
+  userId: string,
+): Promise<void> {
+  await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
+}

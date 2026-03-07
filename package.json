@@ -10,7 +10,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx seed.ts",
-    "build:types": "tsc --project tsconfig.build.json"
+    "build:types": "tsc --project tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "types": "./dist/index.d.ts",
   "exports": {
@@ -32,6 +34,7 @@
     "@types/node": "^25.3.0",
     "drizzle-kit": "^0.31.9",
     "typescript": "^5.7.0",
+    "vitest": "^4.0.18",
     "wrangler": "^3.105.0"
   }
 }

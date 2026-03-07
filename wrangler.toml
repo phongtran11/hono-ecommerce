@@ -3,6 +3,10 @@ main = "src/index.ts"
 compatibility_date = "2025-02-20"
 compatibility_flags = ["nodejs_compat"]
 
+[vars]
+ENVIRONMENT = "production"
+CORS_ORIGIN = "https://your-frontend-domain.com"
+
 [observability]
 [observability.logs]
 enabled = true

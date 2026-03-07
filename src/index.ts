@@ -5,19 +5,21 @@ import { prettyJSON } from "hono/pretty-json";
 import { createDb } from "@/db";
 import { authRoutes } from "@/modules/auth/auth.route";
 import { productRoutes } from "@/modules/products/products.route";
+import { cartRoutes } from "@/modules/cart/cart.route";
+import { orderRoutes } from "@/modules/orders/orders.route";
+import { AppError } from "@/utils/errors";
 import type { Env } from "@/types";
 
 const app = new Hono<Env>();
 
 // ── Middleware ───────────────────────────────────────────────
 app.use("*", logger());
-app.use(
-  "*",
-  cors({
-    origin: "http://localhost:3000",
+app.use("*", async (c, next) => {
+  return cors({
+    origin: c.env.CORS_ORIGIN ?? "http://localhost:3000",
     credentials: true,
-  }),
-);
+  })(c, next);
+});
 app.use("*", prettyJSON());
 
 // ── Database middleware (inject db into context) ────────────
@@ -33,8 +35,10 @@ app.get("/", (c) => {
     name: "Hono Ecommerce API",
     version: "1.0.0",
     endpoints: {
-      auth: "/api/auth/register | /api/auth/login",
+      auth: "/api/auth",
       products: "/api/products",
+      cart: "/api/cart",
+      orders: "/api/orders",
     },
   });
 });
@@ -42,7 +46,9 @@ app.get("/", (c) => {
 // ── Routes ──────────────────────────────────────────────────
 const routes = app
   .route("/api/auth", authRoutes)
-  .route("/api/products", productRoutes);
+  .route("/api/products", productRoutes)
+  .route("/api/cart", cartRoutes)
+  .route("/api/orders", orderRoutes);
 
 export type AppType = typeof routes;
 
@@ -51,10 +57,13 @@ app.notFound((c) => {
   return c.json({ success: false, message: "Not Found" }, 404);
 });
 
-// ── Error handler ───────────────────────────────────────────
+// ── Global error handler ────────────────────────────────────
 app.onError((err, c) => {
+  if (err instanceof AppError) {
+    return c.json({ success: false, message: err.message }, err.status);
+  }
   console.error(err);
-  return c.json({ success: false, message: err.message }, 500);
+  return c.json({ success: false, message: "Internal Server Error" }, 500);
 });
 
 export default app;

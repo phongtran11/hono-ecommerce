@@ -1,9 +1,9 @@
 import {
+  index,
   pgTable,
   text,
   numeric,
   integer,
-  timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
@@ -11,15 +11,19 @@ import { relations } from "drizzle-orm";
 import { auditColumns } from "./common";
 import { productVariants } from "./product-variants";
 
-export const orders = pgTable("orders", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id),
-  total: numeric("total", { precision: 10, scale: 2 }).notNull(),
-  status: text("status").notNull().default("pending"),
-  ...auditColumns,
-});
+export const orders = pgTable(
+  "orders",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    total: numeric("total", { precision: 10, scale: 2 }).notNull(),
+    status: text("status").notNull().default("pending"),
+    ...auditColumns,
+  },
+  (t) => [index("orders_user_id_idx").on(t.userId)],
+);
 
 export type Order = typeof orders.$inferSelect;
 

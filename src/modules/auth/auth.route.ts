@@ -3,6 +3,7 @@ import { deleteCookie, getCookie } from "hono/cookie";
 import type { Env } from "@/types";
 import { zValidator } from "@hono/zod-validator";
 import * as authService from "@/modules/auth/auth.service";
+import { setAuthCookies } from "@/utils/cookie";
 import {
   registerSchema,
   loginSchema,
@@ -27,7 +28,7 @@ const authRoutes = new Hono<Env>()
       return c.json({ success: false, message: result.message }, result.status);
     }
 
-    await authService.setAuthCookies(
+    setAuthCookies(
       c,
       result.data.tokens.accessToken,
       result.data.tokens.refreshToken,
@@ -41,21 +42,16 @@ const authRoutes = new Hono<Env>()
     const { email, password } = c.req.valid("json");
     const db = c.get("db");
 
-    const result = await authService.login(db, email, password);
+    const result = await authService.login(db, email, password, c.env.JWT_SECRET);
 
-    if (!result.success || !result.data?.user) {
+    if (!result.success || !result.data?.user || !result.data.tokens) {
       return c.json({ success: false, message: result.message }, result.status);
     }
 
-    const tokens = await authService.createAuthCookies(
-      db,
-      c.env.JWT_SECRET,
-      result.data.user,
-    );
-    await authService.setAuthCookies(
+    setAuthCookies(
       c,
-      tokens.accessToken,
-      tokens.refreshToken,
+      result.data.tokens.accessToken,
+      result.data.tokens.refreshToken,
     );
 
     return c.json({ success: true, data: result.data });
