@@ -1,17 +1,15 @@
 import { z } from "zod";
+import { paginationSchema } from "@/utils/pagination";
 
-// ── Schema con cho từng price ─────────────────────────────
 const priceItemSchema = z.object({
   name: z.string().min(1, "Price name is required"),
   price: z.number().positive("Price must be greater than 0"),
 });
 
-// ── Schema con cho từng image ─────────────────────────────
 const imageItemSchema = z.object({
-  imagePath: z.string().min(1, "Image path is required"),
+  imageUrl: z.string().min(1, "Image URL is required"),
 });
 
-// ── Schema con cho từng variant ───────────────────────────
 const variantItemSchema = z.object({
   name: z.string().min(1, "Variant name is required"),
   stock: z.number().int().min(0, "Stock must be at least 0"),
@@ -19,7 +17,6 @@ const variantItemSchema = z.object({
   images: z.array(imageItemSchema).optional(),
 });
 
-// ── Schema chính cho create product ───────────────────────
 export const createProductSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   description: z.string().min(1, "Product description is required"),
@@ -30,6 +27,10 @@ export const createProductSchema = z.object({
     .min(1, "At least one variant is required"),
 });
 
-export const getProductsSchema = z.object({
-  category: z.string().optional(),
+export const getProductsSchema = paginationSchema.extend({
+  categoryId: z.string().uuid().optional(),
+});
+
+export const productIdParamSchema = z.object({
+  id: z.string().uuid("Invalid product ID"),
 });

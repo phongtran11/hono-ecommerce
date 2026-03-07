@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { carts } from "./carts";
 import { relations } from "drizzle-orm";
 import { orders } from "./orders";
@@ -21,15 +21,19 @@ export const userRelations = relations(users, ({ many }) => ({
   orders: many(orders),
 }));
 
-export const refreshTokens = pgTable("refresh_tokens", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  token: text("token").notNull().unique(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  expiresAt: timestamp("expires_at").notNull(),
-  ...auditColumns,
-});
+export const refreshTokens = pgTable(
+  "refresh_tokens",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    token: text("token").notNull().unique(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at").notNull(),
+    ...auditColumns,
+  },
+  (t) => [index("refresh_tokens_user_id_idx").on(t.userId)],
+);
 
 export const refreshTokenRelations = relations(refreshTokens, ({ one }) => ({
   user: one(users, {

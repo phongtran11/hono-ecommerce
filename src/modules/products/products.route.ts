@@ -1,22 +1,33 @@
 import { Hono } from "hono";
 import type { Env } from "@/types";
 import { zValidator } from "@hono/zod-validator";
-import { createProductSchema } from "@/modules/products/schemas/products.schema";
+import {
+  createProductSchema,
+  getProductsSchema,
+  productIdParamSchema,
+} from "@/modules/products/schemas/products.schema";
 import * as productsService from "@/modules/products/products.service";
 
 const productRoutes = new Hono<Env>()
-  // ── POST /api/products ─────────────────────────────────────
+  .get("/", zValidator("query", getProductsSchema), async (c) => {
+    const input = c.req.valid("query");
+    const db = c.get("db");
+    const result = await productsService.getProducts(db, input);
+    return c.json(result, result.status);
+  })
+
+  .get("/:id", zValidator("param", productIdParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const db = c.get("db");
+    const result = await productsService.getProductById(db, id);
+    return c.json(result, result.status);
+  })
+
   .post("/", zValidator("json", createProductSchema), async (c) => {
     const input = c.req.valid("json");
     const db = c.get("db");
-
     const result = await productsService.createProduct(db, input);
-
-    if (!result.success) {
-      return c.json({ success: false, message: result.message }, result.status);
-    }
-
-    return c.json({ success: true, data: result.data }, 201);
+    return c.json(result, result.status);
   });
 
 export { productRoutes };

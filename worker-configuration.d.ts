@@ -3,4 +3,6 @@
 interface Env {
   DATABASE_URL: string;
   JWT_SECRET: string;
+  ENVIRONMENT: string;
+  CORS_ORIGIN: string;
 }

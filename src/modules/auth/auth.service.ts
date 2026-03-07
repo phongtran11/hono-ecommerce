@@ -3,36 +3,7 @@ import { sign } from "hono/jwt";
 import { AT_EXPIRES_IN_SEC, RT_EXPIRES_IN_SEC } from "./auth.constant";
 import { DB } from "@/db";
 import * as authRepository from "./auth.repository";
-import { Context } from "hono";
-import { setCookie } from "hono/cookie";
-import type { Env } from "@/types";
 import type { AuthResponse } from "./auth.type";
-import { BlankInput } from "hono/types";
-
-export async function setAuthCookies(
-  c: Context<Env, "/register" | "/login", BlankInput>,
-  accessToken: string,
-  refreshToken: string,
-): Promise<void> {
-  const isProd = false;
-
-  const cookieOptions = {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: "Lax" as const,
-    path: "/",
-  };
-
-  setCookie(c, "access_token", accessToken, {
-    ...cookieOptions,
-    maxAge: AT_EXPIRES_IN_SEC,
-  });
-
-  setCookie(c, "refresh_token", refreshToken, {
-    ...cookieOptions,
-    maxAge: RT_EXPIRES_IN_SEC,
-  });
-}
 
 export async function createAuthCookies(
   db: DB,
@@ -104,6 +75,7 @@ export async function login(
   db: DB,
   email: string,
   passwordRaw: string,
+  jwtSecret: string,
 ): Promise<AuthResponse> {
   const user = await authRepository.findUserByEmail(db, email);
 
@@ -121,10 +93,24 @@ export async function login(
     return { success: false, status: 401, message: "Invalid credentials" };
   }
 
+  const loginResult = await db.transaction(async (tx) => {
+    await authRepository.deleteRefreshTokensByUserId(tx, user.id);
+
+    const tokens = await createAuthCookies(tx, jwtSecret, {
+      id: user.id,
+      email: user.email,
+    });
+
+    return { tokens };
+  });
+
   return {
     success: true,
     status: 200,
-    data: { user: { id: user.id, email: user.email, name: user.name } },
+    data: {
+      user: { id: user.id, email: user.email, name: user.name },
+      tokens: loginResult.tokens,
+    },
   };
 }
 

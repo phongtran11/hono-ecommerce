@@ -1,10 +1,11 @@
 import { createMiddleware } from "hono/factory";
 import { sign, verify } from "hono/jwt";
-import { getCookie, setCookie } from "hono/cookie";
+import { getCookie } from "hono/cookie";
 import { eq } from "drizzle-orm";
 import { refreshTokens } from "@/db/schema";
 import type { Env } from "@/types";
 import { AT_EXPIRES_IN_SEC } from "@/modules/auth/auth.constant";
+import { setAccessTokenCookie } from "@/utils/cookie";
 
 /**
  * Double Cookie Auth Middleware
@@ -70,16 +71,7 @@ export const authMiddleware = createMiddleware<Env>(async (c, next) => {
     secret,
   );
 
-  // Set the new Access Token Cookie
-  const isProd = false;
-
-  setCookie(c, "access_token", newAccessToken, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: "Strict",
-    path: "/",
-    maxAge: AT_EXPIRES_IN_SEC,
-  });
+  setAccessTokenCookie(c, newAccessToken);
 
   // Set payload and proceed
   c.set("jwtPayload", { sub: rtRecord.user.id, email: rtRecord.user.email });

@@ -1,6 +1,6 @@
-import { pgTable, integer, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, pgTable, integer, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { users } from "./users";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { auditColumns } from "./common";
 import { productVariants } from "./product-variants";
 
@@ -23,17 +23,26 @@ export const cartRelations = relations(carts, ({ one, many }) => ({
   items: many(cartItems),
 }));
 
-export const cartItems = pgTable("cart_items", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  cartId: uuid("cart_id")
-    .notNull()
-    .references(() => carts.id, { onDelete: "cascade" }),
-  variantId: uuid("variant_id")
-    .notNull()
-    .references(() => productVariants.id),
-  quantity: integer("quantity").notNull().default(1),
-  ...auditColumns,
-});
+export const cartItems = pgTable(
+  "cart_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    cartId: uuid("cart_id")
+      .notNull()
+      .references(() => carts.id, { onDelete: "cascade" }),
+    variantId: uuid("variant_id")
+      .notNull()
+      .references(() => productVariants.id),
+    quantity: integer("quantity").notNull().default(1),
+    ...auditColumns,
+  },
+  (t) => [
+    index("cart_items_cart_id_idx").on(t.cartId),
+    uniqueIndex("cart_items_cart_variant_active_idx")
+      .on(t.cartId, t.variantId)
+      .where(sql`deleted_at IS NULL`),
+  ],
+);
 
 export type CartItem = typeof cartItems.$inferSelect;
 
