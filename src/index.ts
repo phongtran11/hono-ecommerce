@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { cors } from "hono/cors";
+
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 import { createDb } from "@/db";
@@ -14,12 +14,6 @@ const app = new Hono<Env>();
 
 // ── Middleware ───────────────────────────────────────────────
 app.use("*", logger());
-app.use("*", async (c, next) => {
-  return cors({
-    origin: c.env.CORS_ORIGIN ?? "http://localhost:3000",
-    credentials: true,
-  })(c, next);
-});
 app.use("*", prettyJSON());
 
 // ── Database middleware (inject db into context) ────────────

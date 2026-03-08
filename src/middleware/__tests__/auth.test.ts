@@ -38,7 +38,6 @@ const ENV_BINDINGS = {
   JWT_SECRET: "test-jwt-secret",
   DATABASE_URL: "test-db-url",
   ENVIRONMENT: "test",
-  CORS_ORIGIN: "http://localhost:3000",
 };
 
 function requestWithCookies(

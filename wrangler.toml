@@ -11,10 +11,18 @@ invocation_logs = true
 [observability.traces]
 enabled = true
 
+# ── Development environment ─────────────────────────────────
+# Deployed via: wrangler deploy --env development
+# Worker name:  hono-ecommerce-development
+[env.development]
+name = "hono-ecommerce-development"
+[env.development.vars]
+ENVIRONMENT = "development"
+
+# ── Production environment ──────────────────────────────────
+# Deployed via: wrangler deploy --env production
+# Worker name:  hono-ecommerce-production
+[env.production]
+name = "hono-ecommerce-production"
 [env.production.vars]
 ENVIRONMENT = "production"
-CORS_ORIGIN = "https://your-frontend-domain.com"
-
-[env.staging.vars]
-ENVIRONMENT = "staging"
-CORS_ORIGIN = "https://staging.your-frontend-domain.com"

@@ -1,4 +1,0 @@
-name: local_base_url
-variables:
-  - name: base_url
-    value: hono-ecommerce.phong-tran-private.workers.dev

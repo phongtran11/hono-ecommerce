@@ -1,0 +1,63 @@
+name: Development
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+concurrency:
+  group: dev-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Typecheck & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run build:types
+
+      - name: Run tests
+        run: npm test
+
+  deploy:
+    name: Deploy to Development
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: development
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Deploy to Cloudflare Workers (development)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --env development
+          secrets: |
+            DATABASE_URL
+            JWT_SECRET
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}

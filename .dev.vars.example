@@ -1,4 +1,3 @@
+ENVIRONMENT=development
 DATABASE_URL=
 JWT_SECRET=
-ENVIRONMENT=development
-CORS_ORIGIN=http://localhost:3000
