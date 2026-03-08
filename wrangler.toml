@@ -1,4 +1,4 @@
-name = "hono-ecommerce"
+name = "hono-ecommerce-api"
 main = "src/index.ts"
 compatibility_date = "2025-02-20"
 compatibility_flags = ["nodejs_compat"]
@@ -13,16 +13,16 @@ enabled = true
 
 # ── Development environment ─────────────────────────────────
 # Deployed via: wrangler deploy --env development
-# Worker name:  hono-ecommerce-development
+# Worker name:  hono-ecommerce-api-development
 [env.development]
-name = "hono-ecommerce-development"
+name = "hono-ecommerce-api-development"
 [env.development.vars]
 ENVIRONMENT = "development"
 
 # ── Production environment ──────────────────────────────────
 # Deployed via: wrangler deploy --env production
-# Worker name:  hono-ecommerce-production
+# Worker name:  hono-ecommerce-api-production
 [env.production]
-name = "hono-ecommerce-production"
+name = "hono-ecommerce-api-production"
 [env.production.vars]
 ENVIRONMENT = "production"
