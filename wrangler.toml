@@ -1,4 +1,4 @@
-name = "hono-ecommerce"
+name = "hono-ecommerce-dev"
 main = "src/index.ts"
 compatibility_date = "2025-02-20"
 compatibility_flags = ["nodejs_compat"]
