@@ -130,8 +130,11 @@ ALTER TABLE "product_variant_images" ADD CONSTRAINT "product_variant_images_vari
 ALTER TABLE "product_variants" ADD CONSTRAINT "product_variants_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "prices" ADD CONSTRAINT "prices_variant_id_product_variants_id_fk" FOREIGN KEY ("variant_id") REFERENCES "public"."product_variants"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "cart_items_cart_id_idx" ON "cart_items" USING btree ("cart_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "cart_items_cart_variant_active_idx" ON "cart_items" USING btree ("cart_id","variant_id") WHERE deleted_at IS NULL;--> statement-breakpoint
+CREATE INDEX "refresh_tokens_user_id_idx" ON "refresh_tokens" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "products_category_id_idx" ON "products" USING btree ("category_id");--> statement-breakpoint
 CREATE INDEX "products_vendor_id_idx" ON "products" USING btree ("vendor_id");--> statement-breakpoint
 CREATE INDEX "orders_user_id_idx" ON "orders" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "product_variant_images_variant_id_idx" ON "product_variant_images" USING btree ("variant_id");--> statement-breakpoint
 CREATE INDEX "product_variants_product_id_idx" ON "product_variants" USING btree ("product_id");--> statement-breakpoint
 CREATE INDEX "prices_variant_id_idx" ON "prices" USING btree ("variant_id");

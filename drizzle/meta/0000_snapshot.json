@@ -1,5 +1,5 @@
 {
-  "id": "87341cfc-42a4-4619-ac7d-a1464349ef10",
+  "id": "68ebbf30-00fd-4212-95d7-f2ecd1af1866",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -67,6 +67,28 @@
             }
           ],
           "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cart_items_cart_variant_active_idx": {
+          "name": "cart_items_cart_variant_active_idx",
+          "columns": [
+            {
+              "expression": "cart_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "variant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "deleted_at IS NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -270,7 +292,23 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "refresh_tokens_user_id_idx": {
+          "name": "refresh_tokens_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "refresh_tokens_user_id_users_id_fk": {
           "name": "refresh_tokens_user_id_users_id_fk",
@@ -718,7 +756,23 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "product_variant_images_variant_id_idx": {
+          "name": "product_variant_images_variant_id_idx",
+          "columns": [
+            {
+              "expression": "variant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "product_variant_images_variant_id_product_variants_id_fk": {
           "name": "product_variant_images_variant_id_product_variants_id_fk",

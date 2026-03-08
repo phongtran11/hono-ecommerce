@@ -1,8 +1,10 @@
 import { Hono } from "hono";
+import { swaggerUI } from "@hono/swagger-ui";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 import { createDb } from "@/db";
+import { openApiSpec } from "@/openapi";
 import { authRoutes } from "@/modules/auth/auth.route";
 import { productRoutes } from "@/modules/products/products.route";
 import { cartRoutes } from "@/modules/cart/cart.route";
@@ -40,6 +42,10 @@ app.get("/", (c) => {
       cart: "/api/cart",
       orders: "/api/orders",
     },
+    docs: {
+      swagger: "/ui",
+      openapi: "/doc",
+    },
   });
 });
 
@@ -51,6 +57,10 @@ const routes = app
   .route("/api/orders", orderRoutes);
 
 export type AppType = typeof routes;
+
+// ── Swagger / OpenAPI ───────────────────────────────────────
+app.get("/doc", (c) => c.json(openApiSpec));
+app.get("/ui", swaggerUI({ url: "/doc" }));
 
 // ── 404 fallback ────────────────────────────────────────────
 app.notFound((c) => {
